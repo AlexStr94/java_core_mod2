@@ -3,6 +3,13 @@ import java.util.Scanner;
 import static java.lang.Character.toLowerCase;
 
 public class Calculator {
+    enum Stages {
+        GET_FIRST_OPERAND,
+        GET_OPERATION,
+        GET_SECOND_OPERAND,
+        CALCULATE,
+    }
+
     private static final String WELCOME_MESSAGE = """
             Вас приветствует программа 'Калькулятор'.
             Калькульятор поддерживает следующие операции: +, -, *, /.
@@ -13,42 +20,58 @@ public class Calculator {
     private static final char RESET_CHAR = 'c';
     private static final char EXIT_CHAR = 's';
     private static final Scanner SCANNER = new Scanner(System.in);
-    private static boolean continuationOfCalculations = false;
-    private static double calculations = 0;
+    private static double firstOperand, secondOperand, calculations;
+    private static char operation;
+    private static Stages currentStage = Stages.GET_FIRST_OPERAND;
 
     public static void main(String[] args) {
-        start();
-    }
-
-    private static void start() {
         System.out.println(WELCOME_MESSAGE);
-        getFirstOperand();
-    }
-
-    private static void getFirstOperand() {
-        double firstOperand;
-        if (!continuationOfCalculations) {
-            System.out.println("Введите первый операнд и нажмите Enter:");
-            firstOperand = getOperand();
-        } else {
-            firstOperand = calculations;
+        while (true) {
+            updateStage();
         }
-        getOperation(firstOperand);
     }
 
-    private static void getOperation(double firstOperand) {
+    public static void updateStage() {
+        switch (currentStage) {
+            case Stages.GET_FIRST_OPERAND:
+                currentStage = getFirstOperand();
+                break;
+            case GET_OPERATION:
+                currentStage = getOperation();
+                break;
+            case GET_SECOND_OPERAND:
+                currentStage = getSecondOperand();
+                break;
+            case CALCULATE:
+                currentStage = calculate();
+                break;
+        }
+    }
+
+    private static Stages getFirstOperand() {
+        System.out.println("Введите первый операнд и нажмите Enter:");
+        firstOperand = getOperand();
+
+        return Stages.GET_OPERATION;
+    }
+
+    private static Stages getOperation() {
         System.out.println("Введите операцию и нажмите Enter:");
-        char operation = getOperation();
-        getSecondOperand(firstOperand, operation);
+        operation = getOperationChar();
+        return Stages.GET_SECOND_OPERAND;
     }
 
-    private static void getSecondOperand(double firstOperand, char operation) {
+    private static Stages getSecondOperand() {
         System.out.println("Введите второй операнд и нажмите Enter:");
-        double secondOperand = getOperand();
-        calculate(firstOperand, secondOperand, operation);
+        secondOperand = getOperand();
+        if (operation == '/' && secondOperand == 0) {
+            System.out.println("Делить на ноль нельзя");
+            return getSecondOperand();
+        }
+        return Stages.CALCULATE;
     }
 
-    private static void calculate(double firstOperand, double secondOperand, char operation) {
+    private static Stages calculate() {
         switch (operation) {
             case '+':
                 calculations = firstOperand + secondOperand;
@@ -62,9 +85,9 @@ public class Calculator {
             case '*':
                 calculations = firstOperand * secondOperand;
         }
-        continuationOfCalculations = true;
+        firstOperand = calculations;
         System.out.printf("Результат: %.2f\n", calculations);
-        getFirstOperand();
+        return Stages.GET_OPERATION;
     }
 
     private static void invalidValue() {
@@ -85,13 +108,13 @@ public class Calculator {
         return operand;
     }
 
-    private static char getOperation() {
+    private static char getOperationChar() {
         String input = SCANNER.nextLine();
         checkCommands(input);
         char operation = input.charAt(0);
         if (input.length() > 1 || new String(OPERATIONS).indexOf(operation) == -1) {
             invalidValue();
-            return getOperation();
+            return getOperationChar();
         }
         return operation;
 
@@ -99,7 +122,6 @@ public class Calculator {
 
     private static void checkCommands(String input) {
         if (toLowerCase(input.charAt(0)) == RESET_CHAR) {
-            continuationOfCalculations = false;
             getFirstOperand();
         }
         if (toLowerCase(input.charAt(0)) == EXIT_CHAR) {
