@@ -33,7 +33,7 @@ public class Calculator {
 
     public static void updateStage() {
         switch (currentStage) {
-            case Stages.GET_FIRST_OPERAND:
+            case GET_FIRST_OPERAND:
                 currentStage = getFirstOperand();
                 break;
             case GET_OPERATION:
